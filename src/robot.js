@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as dat from 'dat.gui'
+import Hammer from 'hammerjs'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 
@@ -23,6 +24,15 @@ export default class Robot {
       x: 0,
       y: 0
     }
+    this.rotation = {
+      delta: 0,
+      easing: 0.55 + Math.random() * 0.065,
+      friction: 0.09 + Math.random() * 0.05,
+      position: 0,
+      target: 0,
+      v: 0,
+      tmp: 0,
+    }
     this.tick = this.tick.bind(this)
     this.init()
   }
@@ -35,12 +45,38 @@ export default class Robot {
     this.setCamera()
     this.setLights()
     this.setPlane()
+    this.setRotation()
     // this.setControls()
     // this.gltfLoader.load('/models/robot-5/scene.gltf', this.afterModelLoaded.bind(this))
     this.gltfLoader.load('/models/bottle/scene.gltf', this.afterModelLoaded.bind(this))
     window.addEventListener('resize', this.resize.bind(this))
-    window.addEventListener('mousemove', this.onMouseMove.bind(this))
+    // window.addEventListener('mousemove', this.onMouseMove.bind(this))
     this.resize()
+  }
+
+  setRotation() {
+    this.hammer = new Hammer.Manager(this.canvas, {})
+    this.hammer.add( new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL, threshold: 0 }) );
+    this.hammer.on('panstart', this.onPanStart.bind(this))
+    this.hammer.on('panmove', this.onPanMove.bind(this))
+  }
+
+  onPanStart(e) {
+    console.log(e);
+    this.rotation.tmp = e.center.x
+  }
+
+  onPanMove(e) {
+    // console.log(e.center.x - this.rotation.tmp);
+    this.rotation.target += e.center.x - this.rotation.tmp
+    this.rotation.tmp = e.center.x
+  }
+
+  ease() {
+    this.rotation.delta = this.rotation.target - this.rotation.position;
+    this.rotation.v += this.rotation.delta * this.rotation.easing;
+    this.rotation.v *= this.rotation.friction;
+    this.rotation.position += this.rotation.v;
   }
 
   setRenderer() {
@@ -179,19 +215,21 @@ export default class Robot {
     })
   }
 
-  onMouseMove(event) {
-    this.position = {
-      x: event.clientX,
-      y: event.clientY
-    }
-    // console.log((this.position.x / this.sizes.width - 0.5));
-  }
+  // onMouseMove(event) {
+  //   this.position = {
+  //     x: event.clientX,
+  //     y: event.clientY
+  //   }
+  //   // console.log((this.position.x / this.sizes.width - 0.5));
+  // }
 
   tick() {
     // this.controls.update()
+    this.ease()
+
     this.renderer.render(this.scene, this.camera)
-    this.robot.rotation.y = (this.position.x / this.sizes.width) * (Math.PI * 1)
-    this.robot.rotation.x = (this.position.y / this.sizes.height) * (Math.PI * 0.3)
+    this.robot.rotation.y = this.rotation.position / 200 * Math.PI
+    // this.robot.rotation.x = (this.position.y / this.sizes.height) * (Math.PI * 0.3)
 
     window.requestAnimationFrame(this.tick)
   }
