@@ -130,7 +130,7 @@ export default class Robot {
   afterModelLoaded(gltf) {
     this.robot = gltf.scene
     this.robot.scale.set(0.1, 0.1, 0.1)
-    this.robot.position.set(3, -7, 3)
+    this.robot.position.set(6, -7, 3)
     this.gui.add(this.robot.position, 'x', -30, 30, 0.01).name('robot X')
     this.gui.add(this.robot.position, 'y', -30, 30, 0.01).name('robot Y')
     this.gui.add(this.robot.position, 'z', -30, 30, 0.01).name('robot Z')
@@ -213,9 +213,9 @@ export default class Robot {
   }
 
   setCamera () {
-    this.camera = new THREE.PerspectiveCamera(75, this.sizes.width / this.sizes.height, 0.1, 100)
-    this.camera.position.set(0, 6, 20)
-    this.camera.lookAt(0, 0, 0)
+    this.camera = new THREE.PerspectiveCamera(45, this.sizes.width / this.sizes.height, 0.1, 100)
+    this.camera.position.set(0, 7, 30)
+    this.camera.lookAt(0, -1, 0)
     this.scene.add(this.camera)
     this.gui.add(this.camera.position, 'x', -30, 30, 0.01).name('Camera X')
     this.gui.add(this.camera.position, 'y', -30, 30, 0.01).name('Camera Y')
