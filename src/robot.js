@@ -12,9 +12,9 @@ export default class Robot {
     this.gui = new dat.GUI()
     this.scene = new THREE.Scene({
     })
-    this.scene.background = new THREE.Color('#f5f5f7')
+    // this.scene.background = new THREE.Color('#f5f5f7')
     this.debugObject = {
-      envMapIntensity: 5
+      envMapIntensity: 20
     }
     this.sizes = {
       width: window.innerWidth,
@@ -38,19 +38,20 @@ export default class Robot {
   }
 
   init() {
-    const fog = new THREE.Fog('#f5f5f7', 10, 40)
-    this.scene.fog = fog
+    // const fog = new THREE.Fog('#f5f5f7', 10, 40)
+    // this.scene.fog = fog
     this.setRenderer()
     this.setEnvMap()
     this.setCamera()
-    this.setLights()
-    this.setPlane()
+    this.setFirstLight()
+    this.setSecondLight()
+    this.setThirdLight()
+    this.setFourthLight()
+    // this.setPlane()
     this.setRotation()
     // this.setControls()
-    // this.gltfLoader.load('/models/robot-5/scene.gltf', this.afterModelLoaded.bind(this))
-    this.gltfLoader.load('/models/bottle/scene.gltf', this.afterModelLoaded.bind(this))
+    this.gltfLoader.load('/models/robot/robot.glb', this.afterModelLoaded.bind(this))
     window.addEventListener('resize', this.resize.bind(this))
-    // window.addEventListener('mousemove', this.onMouseMove.bind(this))
     this.resize()
   }
 
@@ -62,12 +63,10 @@ export default class Robot {
   }
 
   onPanStart(e) {
-    console.log(e);
     this.rotation.tmp = e.center.x
   }
 
   onPanMove(e) {
-    // console.log(e.center.x - this.rotation.tmp);
     this.rotation.target += e.center.x - this.rotation.tmp
     this.rotation.tmp = e.center.x
   }
@@ -82,13 +81,15 @@ export default class Robot {
   setRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: true
+      antialias: true,
+      alpha: true,
     })
     this.renderer.physicallyCorrectLights = true
     this.renderer.outputEncoding = THREE.sRGBEncoding
-    this.renderer.toneMapping = THREE.ReinhardToneMapping
-    this.renderer.toneMappingExposure = 3
+    this.renderer.toneMapping = THREE.CineonToneMapping
+    this.renderer.toneMappingExposure = 0.1
     this.renderer.shadowMap.enabled = true
+    this.renderer.setClearColor( 0x000000, 0 ); // the defaul
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
     this.gui.add(this.renderer, 'toneMapping', {
@@ -99,7 +100,7 @@ export default class Robot {
       ACESFilmic: THREE.ACESFilmicToneMapping
     }).onFinishChange(() => {
         this.renderer.toneMapping = Number(this.renderer.toneMapping)
-        updateAllMaterials()
+        this.updateAllMaterials()
     })
     this.gui.add(this.renderer, 'toneMappingExposure', 0, 5, 0.01)
   }
@@ -116,7 +117,7 @@ export default class Robot {
     environmentMap.encoding = THREE.sRGBEncoding
     this.scene.environment = environmentMap
 
-    this.gui.add(this.debugObject, 'envMapIntensity', 0, 10, 0.01)
+    this.gui.add(this.debugObject, 'envMapIntensity', 0, 100, 0.01)
     .name('Environment Map Intensity')
     .onChange(this.updateAllMaterials.bind(this))
   }
@@ -128,66 +129,117 @@ export default class Robot {
 
   afterModelLoaded(gltf) {
     this.robot = gltf.scene
-    this.robot.scale.set(0.01, 0.01, 0.01)
-    this.robot.position.set(0, 1, 0)
-    this.robot.rotation.z = 0.1 * Math.PI
-    this.robot.castShadow = true
+    this.robot.scale.set(0.1, 0.1, 0.1)
+    this.robot.position.set(3, -7, 3)
+    this.gui.add(this.robot.position, 'x', -30, 30, 0.01).name('robot X')
+    this.gui.add(this.robot.position, 'y', -30, 30, 0.01).name('robot Y')
+    this.gui.add(this.robot.position, 'z', -30, 30, 0.01).name('robot Z')
     this.scene.add(gltf.scene)
     this.updateAllMaterials()
     this.tick()
   }
 
-  setLights () {
+  setFirstLight () {
     const directionalLight = new THREE.DirectionalLight('#FFFFFF', 3)
-    directionalLight.position.set(5, 12, -13)
-    directionalLight.castShadow = true
-    directionalLight.shadow.camera.far = 40
-    directionalLight.shadow.camera.top = 9
-    directionalLight.shadow.camera.right = 9
-    directionalLight.shadow.camera.bottom = - 9
-    directionalLight.shadow.camera.left = - 9
-    directionalLight.shadow.mapSize.set(1024, 1024)
+    directionalLight.position.set(20, 2, 0)
+    directionalLight.intensity = 300
     this.scene.add(directionalLight)
 
     directionalLight.shadow.normalBias = 0.05
 
-    // const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-    // this.scene.add(directionalLightCameraHelper)
+    const directionalLightCameraHelper = new THREE.DirectionalLightHelper(directionalLight)
+    this.scene.add(directionalLightCameraHelper)
 
-    this.gui.add(directionalLight, 'intensity', 0, 10, 0.1).name('Light Intensity')
-    this.gui.add(directionalLight.position, 'x', -15, 15, 0.001).name('Light X')
-    this.gui.add(directionalLight.position, 'y', -15, 15, 0.001).name('Light Y')
-    this.gui.add(directionalLight.position, 'z', -15, 15, 0.001).name('Light Z')
+    this.gui.add(directionalLight, 'intensity', 0, 300, 0.1).name('Light Intensity 1')
+    this.gui.add(directionalLight.position, 'x', -15, 15, 0.001).name('Light X 1')
+    this.gui.add(directionalLight.position, 'y', -15, 15, 0.001).name('Light Y 1')
+    this.gui.add(directionalLight.position, 'z', -15, 15, 0.001).name('Light Z 1')
+  }
+
+  setSecondLight () {
+    const directionalLight = new THREE.DirectionalLight('#FFFFFF', 3)
+    directionalLight.position.set(-10, 8, 0)
+    directionalLight.intensity = 300
+    this.scene.add(directionalLight)
+
+    directionalLight.shadow.normalBias = 0.05
+
+    const directionalLightCameraHelper = new THREE.DirectionalLightHelper(directionalLight)
+    this.scene.add(directionalLightCameraHelper)
+
+    this.gui.add(directionalLight, 'intensity', 0, 300, 0.1).name('Light Intensity 2')
+    this.gui.add(directionalLight.position, 'x', -15, 15, 0.001).name('Light X 2')
+    this.gui.add(directionalLight.position, 'y', -15, 15, 0.001).name('Light Y 2')
+    this.gui.add(directionalLight.position, 'z', -15, 15, 0.001).name('Light Z 2')
+  }
+
+  setThirdLight () {
+    const directionalLight = new THREE.DirectionalLight('#FF66F9', 200)
+    directionalLight.position.set(20, -3, 2)
+    directionalLight.target.position.set(0, -7, 0)
+    this.scene.add(directionalLight)
+    this.scene.add(directionalLight.target)
+
+    directionalLight.shadow.normalBias = 0.05
+
+    const directionalLightCameraHelper = new THREE.DirectionalLightHelper(directionalLight)
+    this.scene.add(directionalLightCameraHelper)
+
+    this.gui.add(directionalLight, 'intensity', 0, 200, 0.1).name('Light Intensity 3')
+    this.gui.add(directionalLight.position, 'x', -15, 15, 0.001).name('Light X 3')
+    this.gui.add(directionalLight.position, 'y', -15, 15, 0.001).name('Light Y 3')
+    this.gui.add(directionalLight.position, 'z', -15, 15, 0.001).name('Light Z 3')
+  }
+
+  setFourthLight () {
+    const directionalLight = new THREE.DirectionalLight('#FF66F9', 3)
+    directionalLight.position.set(-4, -3, 9)
+
+    this.scene.add(directionalLight)
+
+    directionalLight.shadow.normalBias = 0.05
+
+    const directionalLightCameraHelper = new THREE.DirectionalLightHelper(directionalLight)
+    this.scene.add(directionalLightCameraHelper)
+
+    this.gui.add(directionalLight, 'intensity', 0, 200, 0.1).name('Light Intensity 4')
+    this.gui.add(directionalLight.position, 'x', -15, 15, 0.001).name('Light X 4')
+    this.gui.add(directionalLight.position, 'y', -15, 15, 0.001).name('Light Y 4')
+    this.gui.add(directionalLight.position, 'z', -15, 15, 0.001).name('Light Z 4')
+    
+    this.gui.add(directionalLight.target.position, 'x', -15, 15, 0.001).name('Light X target')
+    this.gui.add(directionalLight.target.position, 'y', -15, 15, 0.001).name('Light Y target')
+    this.gui.add(directionalLight.target.position, 'z', -15, 15, 0.001).name('Light Z target')
   }
 
   setCamera () {
     this.camera = new THREE.PerspectiveCamera(75, this.sizes.width / this.sizes.height, 0.1, 100)
-    this.camera.position.set(15, 4, 0)
+    this.camera.position.set(0, 6, 20)
     this.camera.lookAt(0, 0, 0)
     this.scene.add(this.camera)
-    this.gui.add(this.camera.position, 'x', -15, 15, 0.01, 'Camera X')
-    this.gui.add(this.camera.position, 'y', -15, 15, 0.01, 'Camera Y')
-    this.gui.add(this.camera.position, 'z', -15, 15, 0.01, 'Camera Z')
+    this.gui.add(this.camera.position, 'x', -30, 30, 0.01).name('Camera X')
+    this.gui.add(this.camera.position, 'y', -30, 30, 0.01).name('Camera Y')
+    this.gui.add(this.camera.position, 'z', -30, 30, 0.01).name('Camera Z')
   }
 
-  setPlane() {
-    const material = new THREE.MeshStandardMaterial({
-      color: "#f5f5f7"
-    })
-    material.roughness = 0.7
-    const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(5, 5),
-      material
-      // new THREE.MeshBasicMaterial({
-      //     map: bakedShadow
-      // })
-    )
-    plane.scale.set(30, 30, 30)
-    plane.rotation.x = - Math.PI * 0.5
-    plane.position.y = - 7
-    plane.receiveShadow = true
-    this.scene.add(plane)
-  }
+  // setPlane() {
+  //   const material = new THREE.MeshStandardMaterial({
+  //     color: "#f5f5f7"
+  //   })
+  //   material.roughness = 0.7
+  //   const plane = new THREE.Mesh(
+  //     new THREE.PlaneGeometry(5, 5),
+  //     material
+  //     // new THREE.MeshBasicMaterial({
+  //     //     map: bakedShadow
+  //     // })
+  //   )
+  //   plane.scale.set(30, 30, 30)
+  //   plane.rotation.x = - Math.PI * 0.5
+  //   plane.position.y = - 7
+  //   // plane.receiveShadow = true
+  //   this.scene.add(plane)
+  // }
 
   resize() {
     this.sizes.width = window.innerWidth
@@ -207,29 +259,19 @@ export default class Robot {
       if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
           // console.log(child);
           // child.material.envMap = environmentMap
-          child.castShadow = true
-          child.receiveShadow = true
+          // child.castShadow = true
+          // child.receiveShadow = true
           child.material.envMapIntensity = this.debugObject.envMapIntensity
           child.material.needsUpdate = true
       }
     })
   }
 
-  // onMouseMove(event) {
-  //   this.position = {
-  //     x: event.clientX,
-  //     y: event.clientY
-  //   }
-  //   // console.log((this.position.x / this.sizes.width - 0.5));
-  // }
-
   tick() {
-    // this.controls.update()
     this.ease()
-
-    this.renderer.render(this.scene, this.camera)
+    // this.controls.update()
     this.robot.rotation.y = this.rotation.position / 200 * Math.PI
-    // this.robot.rotation.x = (this.position.y / this.sizes.height) * (Math.PI * 0.3)
+    this.renderer.render(this.scene, this.camera)
 
     window.requestAnimationFrame(this.tick)
   }
